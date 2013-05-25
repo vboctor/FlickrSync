@@ -14,7 +14,7 @@
     <ManifestCertificateThumbprint>4E877021F6DD888EE3500057CEC6A62F7EA0F763</ManifestCertificateThumbprint>
     <ManifestKeyFile>Auxiliary\flickrsync.pfx</ManifestKeyFile>
     <GenerateManifests>true</GenerateManifests>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <ApplicationIcon>Resources\flickrsync.ico</ApplicationIcon>
     <FileUpgradeFlags>
