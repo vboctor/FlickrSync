@@ -220,34 +220,52 @@ namespace FlickrSync
 
                 if (sf.SetId != "")
                 {
-                    try
+                    int retryCount = 0;
+                    bool success = false;
+
+                    while (!success)
                     {
-                        foreach (Photo p in FlickrSync.ri.SetPhotos(sf.SetId))
+                        try
                         {
-                            // workaround since media type and p.MachineTags is not working on FlickrNet 2.1.5
-                            if (p.CleanTags != null)
+                            ArrayList photosInSet = new ArrayList();
+
+                            foreach (Photo p in FlickrSync.ri.SetPhotos(sf.SetId))
                             {
-                                if (p.CleanTags.ToLower().Contains("flickrsync:type=video") ||
-                                    p.CleanTags.ToLower().Contains("flickrsync:cmd=skip") ||
-                                    p.CleanTags.ToLower().Contains("flickrsync:type:video") ||
-                                    p.CleanTags.ToLower().Contains("flickrsync:cmd:skip"))
-                                    continue;
+                                // workaround since media type and p.MachineTags is not working on FlickrNet 2.1.5
+                                if (p.CleanTags != null)
+                                {
+                                    if (p.CleanTags.ToLower().Contains("flickrsync:type=video") ||
+                                        p.CleanTags.ToLower().Contains("flickrsync:cmd=skip") ||
+                                        p.CleanTags.ToLower().Contains("flickrsync:type:video") ||
+                                        p.CleanTags.ToLower().Contains("flickrsync:cmd:skip"))
+                                        continue;
+                                }
+
+                                PhotoInfo pi = new PhotoInfo();
+                                pi.Title = p.Title;
+                                pi.DateTaken = p.DateTaken;
+                                pi.DateSync = sf.LastSync;
+                                pi.DateUploaded = p.DateUploaded;
+                                pi.PhotoId = p.PhotoId;
+                                pi.Found = false;
+                                photosInSet.Add(pi);
                             }
 
-                            PhotoInfo pi = new PhotoInfo();
-                            pi.Title = p.Title;
-                            pi.DateTaken = p.DateTaken;
-                            pi.DateSync = sf.LastSync;
-                            pi.DateUploaded = p.DateUploaded;
-                            pi.PhotoId = p.PhotoId;
-                            pi.Found = false;
-                            photos.Add(pi);
+                            photos.AddRange(photosInSet);
+                            success = true;
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        FlickrSync.Error("Error loading information from Set " + sf.SetId, ex, FlickrSync.ErrorType.Normal);
-                        Close();
+                        catch (Exception ex)
+                        {
+                            if (retryCount++ <= 30)
+                            {
+                                Thread.Sleep(TimeSpan.FromSeconds(1));
+                            }
+                            else
+                            {
+                                FlickrSync.Error("Error loading information from Set " + sf.SetId, ex, FlickrSync.ErrorType.Normal);
+                                Close();
+                            }
+                        }
                     }
                 }
 
@@ -763,6 +781,8 @@ namespace FlickrSync
                 if (SyncFolders.Count>0)
                     SyncProgressDate=((SyncFolder)SyncFolders[0]).LastSync;
 
+                int sequenceOfPhotosSkipped = 0;
+
                 foreach (SyncItem si in SyncItems)
                 {
                     if (SyncAborted)
@@ -843,6 +863,7 @@ namespace FlickrSync
 
                             bool retry = true;
                             int retrycount=0;
+                            bool skipPhoto = false;
 
                             //sometimes upload may fail, so retry a few times before giving up
                             while (retry)
@@ -851,23 +872,37 @@ namespace FlickrSync
                                 {
                                     PhotoId = FlickrSync.ri.UploadPicture(si.Filename, si.Title, si.Description, si.Tags, si.Permission);
                                     retry = false;
+                                    sequenceOfPhotosSkipped = 0;
                                 }
                                 catch (Exception ex)
                                 {
-                                    if (retrycount <= 1)
+                                    if (retrycount <= 30)
+                                    {
+                                        Thread.Sleep(TimeSpan.FromSeconds(1));
                                         retrycount++;
+                                    }
                                     else
                                     {
                                         FlickrSync.Error("Error uploading picture to flickr: " + si.Filename, ex, FlickrSync.ErrorType.Normal);
-                                        SyncAborted = true;
+                                        skipPhoto = true;
+                                        sequenceOfPhotosSkipped++;
                                         retry = false;
                                         break;
                                     }
                                 }
                             }
 
-                            if (SyncAborted)
+                            // Abort if we had 50 bad photos in a row.
+                            if (sequenceOfPhotosSkipped >= 50)
+                            {
                                 break;
+                            }
+
+                            // A photo can be corrupted, so let's move on to the next one.
+                            if (skipPhoto)
+                            {
+                                continue;
+                            }
 
                             if (si.SetId != "")
                             {
@@ -889,8 +924,8 @@ namespace FlickrSync
                                         }
                                         else
                                         {                       //only ask for user confirmation after retrying (retry several times if messages are disabled).
-                                            if ((retrycount>0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
-                                                (retrycount>3 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
+                                            if ((retrycount > 0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
+                                                (retrycount > 30 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
                                             {
                                                 DialogResult resp = DialogResult.Abort;
                                                 if (FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll)
@@ -907,15 +942,17 @@ namespace FlickrSync
                                                     retry = false;
                                             }
                                             else
-                                                Thread.Sleep(5000);
+                                            {
+                                                Thread.Sleep(TimeSpan.FromSeconds(1));
+                                            }
 
                                             retrycount++;
                                         }
                                     }
                                     catch (Exception ex2) // all other exceptions do the same
                                     {                     //only ask for user confirmation after retrying (retry several times if messages are disabled).
-                                        if ((retrycount>0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
-                                            (retrycount>3 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
+                                        if ((retrycount > 0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
+                                            (retrycount > 30 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
                                         {
                                             DialogResult resp = DialogResult.Abort;
                                             if (FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll)
@@ -932,7 +969,9 @@ namespace FlickrSync
                                                 retry = false;
                                         }
                                         else
-                                            Thread.Sleep(5000);
+                                        {
+                                            Thread.Sleep(TimeSpan.FromSeconds(1));
+                                        }
 
                                         retrycount++;
                                     }
