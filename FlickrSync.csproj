@@ -1,0 +1,276 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <PlatformTarget>x86</PlatformTarget>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{49A31133-1AC6-48A9-AE88-E3B3214B573C}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FlickrSync</RootNamespace>
+    <AssemblyName>FlickrSync</AssemblyName>
+    <ManifestCertificateThumbprint>4E877021F6DD888EE3500057CEC6A62F7EA0F763</ManifestCertificateThumbprint>
+    <ManifestKeyFile>Auxiliary\flickrsync.pfx</ManifestKeyFile>
+    <GenerateManifests>true</GenerateManifests>
+    <SignManifests>true</SignManifests>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <ApplicationIcon>Resources\flickrsync.ico</ApplicationIcon>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkSubset>
+    </TargetFrameworkSubset>
+    <TargetZone>LocalIntranet</TargetZone>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <SupportUrl>http://flickrsync.freehostia.com</SupportUrl>
+    <ProductName>FlickrSync</ProductName>
+    <PublisherName>FlickrSync</PublisherName>
+    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationVersion>0.8.5.2</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FlickrNet, Version=2.1.5.19851, Culture=neutral, PublicKeyToken=2491df59efa5d132">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\FlickrNet.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Programas\Reference Assemblies\Microsoft\Framework\v3.0\PresentationCore.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="ThumbDBLib, Version=1.0.2302.22260, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\ThumbDBLib.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Programas\Reference Assemblies\Microsoft\Framework\v3.0\WindowsBase.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Auxiliary\AboutBox1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Auxiliary\AboutBox1.Designer.cs">
+      <DependentUpon>AboutBox1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Auxiliary\Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Auxiliary\Login.Designer.cs">
+      <DependentUpon>Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Auxiliary\PathInfo.cs" />
+    <Compile Include="Auxiliary\PhotoSort.cs" />
+    <Compile Include="Auxiliary\Preferences.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Auxiliary\Preferences.Designer.cs">
+      <DependentUpon>Preferences.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Auxiliary\Program.cs" />
+    <Compile Include="Generics\CustomMsgBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Generics\CustomMsgBox.Designer.cs">
+      <DependentUpon>CustomMsgBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Generics\FolderBrowser.cs" />
+    <Compile Include="Generics\ImageInfo.cs" />
+    <Compile Include="Generics\SelectFromList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Generics\SelectFromList.Designer.cs">
+      <DependentUpon>SelectFromList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Generics\sortLastWriteHelper.cs" />
+    <Compile Include="Generics\TreeFolders.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Generics\TreeViewMS.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="MainApp\FlickrSync.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainApp\FlickrSync.Designer.cs">
+      <DependentUpon>FlickrSync.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainApp\LocalInfo.cs" />
+    <Compile Include="MainApp\RemoteInfo.cs" />
+    <Compile Include="MainApp\TreeFoldersToSync.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Auxiliary\AboutBox1.resx">
+      <DependentUpon>AboutBox1.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Auxiliary\Login.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Auxiliary\Preferences.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>Preferences.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Generics\CustomMsgBox.resx">
+      <DependentUpon>CustomMsgBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Generics\SelectFromList.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>SelectFromList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainApp\FlickrSync.resx">
+      <DependentUpon>FlickrSync.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sync\SyncFolderForm.resx">
+      <DependentUpon>SyncFolderForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sync\SyncView.resx">
+      <DependentUpon>SyncView.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="Sync\PhotoInfo.cs" />
+    <Compile Include="Sync\SyncFolder.cs" />
+    <Compile Include="Sync\SyncFolderForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sync\SyncFolderForm.Designer.cs">
+      <DependentUpon>SyncFolderForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sync\SyncItem.cs" />
+    <Compile Include="Sync\SyncView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sync\SyncView.Designer.cs">
+      <DependentUpon>SyncView.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Resources\flickrsync.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\check.png" />
+    <Content Include="Resources\default.gif" />
+    <Content Include="Resources\delete.gif" />
+    <Content Include="Resources\Error.png" />
+    <Content Include="Resources\flickrsync.ico" />
+    <Content Include="Resources\Help.png" />
+    <Content Include="Resources\logo.gif" />
+    <Content Include="Resources\new.gif" />
+    <Content Include="Resources\none.gif" />
+    <Content Include="Resources\replace.gif" />
+    <Content Include="Resources\star_blue.gif" />
+    <Content Include="Resources\star_empty.gif" />
+    <Content Include="Resources\star_pink.gif" />
+    <None Include="Auxiliary\flickrsync.pfx" />
+    <None Include="Properties\app.manifest" />
+    <None Include="Resources\ThumbnailView.png" />
+    <None Include="Resources\SychronizeListHS.png" />
+    <None Include="Resources\SaveAllHS.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Micro?oft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
