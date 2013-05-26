@@ -11,6 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Threading;
 using ThumbDBLib;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace FlickrSync
 {
@@ -187,6 +188,101 @@ namespace FlickrSync
             }
         }
 
+        private List<FileInfo> GetFiles(SyncFolder sf)
+        {
+            var files = new List<FileInfo>();
+
+            try
+            {
+                DirectoryInfo dir = new DirectoryInfo(sf.FolderPath);
+                if (!dir.Exists)
+                {
+                    if (FlickrSync.messages_level != FlickrSync.MessagesLevel.MessagesNone)
+                    {
+                        if (MessageBox.Show("Folder " + sf.FolderPath + " no longer exists. Remove from configuration?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                        {
+                            FlickrSync.li.Remove(sf.FolderPath);
+                            FlickrSync.Log(FlickrSync.LogLevel.LogAll, sf.FolderPath + " deleted from configuration");
+                        }
+                        else
+                            FlickrSync.Log(FlickrSync.LogLevel.LogAll, sf.FolderPath + " does not exist");
+                    }
+
+                    return files;
+                }
+
+                int count = Properties.Settings.Default.Extensions.Count;
+
+                foreach (string ext in Properties.Settings.Default.Extensions)
+                {
+                    files.AddRange(dir.GetFiles("*." + ext));
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Cursor = Cursors.Default;
+                FlickrSync.Error("Error accessing path: " + sf.FolderPath, ex, FlickrSync.ErrorType.Normal);
+                this.Close();
+            }
+
+            return files;
+        }
+
+        private bool ShouldExcludePhoto(SyncFolder sf, FileInfo fi, out ImageInfo ii)
+        {
+            ii = new ImageInfo();
+            string[] ftags = sf.FilterTags.Split(';');
+            for (int i = 0; i < ftags.GetLength(0); i++)
+            {
+                ftags[i] = ftags[i].Trim();
+            }
+
+            bool include = true;
+
+            if (sf.FilterType == SyncFolder.FilterTypes.FilterIncludeTags ||
+                sf.FilterType == SyncFolder.FilterTypes.FilterStarRating ||
+                sf.SyncMethod == SyncFolder.Methods.SyncDateTaken ||
+                sf.SyncMethod == SyncFolder.Methods.SyncTitleOrFilename)
+            {
+                ii.Load(fi.FullName, ImageInfo.FileTypes.FileTypeUnknown);
+            }
+
+            if (sf.FilterType == SyncFolder.FilterTypes.FilterIncludeTags)
+            {
+                include = false;
+
+                foreach (string tag in ii.GetTagsArray())
+                {
+                    foreach (string tag2 in ftags)
+                    {
+                        if (string.Equals(tag, tag2, StringComparison.OrdinalIgnoreCase))
+                        {
+                            include = true;
+                            break;
+                        }
+                    }
+
+                    if (include)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (sf.FilterType == SyncFolder.FilterTypes.FilterStarRating)
+            {
+                if (sf.FilterStarRating > ii.GetStarRating())
+                {
+                    include = false;
+                }
+            }
+
+            /*if (fi.Length > max_size)
+                include = false;*/
+
+            return !include;
+        }
+
         private void CalcSync()
         {
             this.Cursor = Cursors.WaitCursor;
@@ -269,60 +365,7 @@ namespace FlickrSync
                     }
                 }
 
-                FileInfo[] files ={ };
-
-                try
-                {
-                    DirectoryInfo dir = new DirectoryInfo(sf.FolderPath);
-                    if (!dir.Exists)
-                    {
-                        if (FlickrSync.messages_level != FlickrSync.MessagesLevel.MessagesNone)
-                        {
-                            if (MessageBox.Show("Folder " + sf.FolderPath + " no longer exists. Remove from configuration?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                            {
-                                FlickrSync.li.Remove(sf.FolderPath);
-                                FlickrSync.Log(FlickrSync.LogLevel.LogAll, sf.FolderPath + " deleted from configuration");
-                            }
-                            else
-                                FlickrSync.Log(FlickrSync.LogLevel.LogAll, sf.FolderPath + " does not exist");
-                        }
-
-                        continue;
-                    }
-
-                    int count = Properties.Settings.Default.Extensions.Count;
-                    int total = 0;
-                    FileInfo[][] files_ext = new FileInfo[count][];
-
-                    foreach (string ext in Properties.Settings.Default.Extensions)
-                    {
-                        count--;
-                        files_ext[count] = dir.GetFiles("*." + ext);
-                        total += files_ext[count].GetLength(0);
-                    }
-
-                    files = new FileInfo[total];
-                    total = 0;
-                    foreach (string ext in Properties.Settings.Default.Extensions)
-                    {
-                        files_ext[count].CopyTo(files, total);
-                        total += files_ext[count].GetLength(0);
-                        count++;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    this.Cursor = Cursors.Default;
-                    FlickrSync.Error("Error accessing path: " + sf.FolderPath, ex, FlickrSync.ErrorType.Normal);
-                    this.Close();
-                }
-
-                ImageInfo ii = new ImageInfo();
-                string[] ftags = sf.FilterTags.Split(';');
-                for (int i = 0; i < ftags.GetLength(0); i++)
-                {
-                    ftags[i] = ftags[i].Trim().ToLower();
-                }
+                List<FileInfo> files = GetFiles(sf);
 
                 ListViewGroup group;
                 if (sf.SetId == "")
@@ -341,45 +384,15 @@ namespace FlickrSync
 
                 listViewToSync.Groups.Add(group);
 
-                Array.Sort(files, new sortLastWriteHelper());
+                files.Sort(new SortLastWriteHelper());
 
                 foreach (FileInfo fi in files)
                 {
-                    bool include = true;
-
-                    if (sf.FilterType == SyncFolder.FilterTypes.FilterIncludeTags ||
-                        sf.FilterType == SyncFolder.FilterTypes.FilterStarRating || 
-                        sf.SyncMethod == SyncFolder.Methods.SyncDateTaken || 
-                        sf.SyncMethod == SyncFolder.Methods.SyncTitleOrFilename)
-                        ii.Load(fi.FullName, ImageInfo.FileTypes.FileTypeUnknown);
-
-                    if (sf.FilterType == SyncFolder.FilterTypes.FilterIncludeTags)
+                    ImageInfo ii;
+                    if (ShouldExcludePhoto(sf, fi, out ii))
                     {
-                        include = false;
-
-                        foreach (string tag in ii.GetTagsArray())
-                        {
-                            foreach (string tag2 in ftags)
-                                if (tag.ToLower() == tag2)
-                                {
-                                    include = true;
-                                    break;
-                                }
-
-                            if (include)
-                                break;
-                        }
-                    }
-
-                    if (sf.FilterType == SyncFolder.FilterTypes.FilterStarRating) 
-                        if (sf.FilterStarRating>ii.GetStarRating())
-                            include=false;
-
-                    /*if (fi.Length > max_size)
-                        include = false;*/
-
-                    if (!include)
                         continue;
+                    }
 
                     string name = fi.Name;
                     foreach (string ext in Properties.Settings.Default.Extensions)
