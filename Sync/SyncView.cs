@@ -386,7 +386,7 @@ namespace FlickrSync
         {
             var photosInSet = new List<PhotoInfo>();
 
-            if (!string.IsNullOrEmpty(sf.SetId))
+            if (string.IsNullOrEmpty(sf.SetId))
             {
                 return photosInSet;
             }
@@ -472,8 +472,19 @@ namespace FlickrSync
                     continue;
                 }
 
-                var photos = new List<PhotoInfo>();
+                List<FileInfo> files = GetFiles(sf);
 
+                // Skip sync folders that have same number of photos as photo sets
+                if (!string.IsNullOrEmpty(sf.SetId))
+                {
+                    Photoset photoset = FlickrSync.ri.GetPhotoset(sf.SetId);
+                    if (photoset.NumberOfPhotos == files.Count)
+                    {
+                        continue;
+                    }
+                }
+
+                var photos = new List<PhotoInfo>();
                 try
                 {
                     photos = GetPhotos(sf);
@@ -483,8 +494,6 @@ namespace FlickrSync
                     FlickrSync.Error("Error loading information from Set " + sf.SetId, ex, FlickrSync.ErrorType.Normal);
                     Close();
                 }
-
-                List<FileInfo> files = GetFiles(sf);
 
                 ListViewGroup group;
                 if (string.IsNullOrEmpty(sf.SetId))
