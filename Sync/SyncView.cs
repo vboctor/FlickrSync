@@ -225,6 +225,8 @@ namespace FlickrSync
                 this.Close();
             }
 
+            files.Sort(new SortLastWriteHelper());
+
             return files;
         }
 
@@ -281,6 +283,26 @@ namespace FlickrSync
                 include = false;*/
 
             return !include;
+        }
+
+        private string GetImageNameFromFileName(string filename)
+        {
+            string name = filename;
+
+            foreach (string ext in Properties.Settings.Default.Extensions)
+            {
+                if (filename.EndsWith("." + ext, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    name = name.Remove(name.Length - 4);
+                }
+            }
+
+            if (name.EndsWith(" "))  // flickr removes ending space - need to replace with something else
+            {
+                name = name.Remove(name.Length - 1).Insert(name.Length - 1, @"|");
+            }
+
+            return name;
         }
 
         private void CalcSync()
@@ -384,8 +406,6 @@ namespace FlickrSync
 
                 listViewToSync.Groups.Add(group);
 
-                files.Sort(new SortLastWriteHelper());
-
                 foreach (FileInfo fi in files)
                 {
                     ImageInfo ii;
@@ -394,13 +414,7 @@ namespace FlickrSync
                         continue;
                     }
 
-                    string name = fi.Name;
-                    foreach (string ext in Properties.Settings.Default.Extensions)
-                        if (fi.Name.EndsWith("." + ext, StringComparison.CurrentCultureIgnoreCase))
-                            name = name.Remove(name.Length - 4);
-
-                    if (name.EndsWith(" "))  // flickr removes ending space - need to replace with something else
-                        name=name.Remove(name.Length-1).Insert(name.Length-1,@"|");
+                    string name = GetImageNameFromFileName(fi.Name);
 
                     // Matching photos
                     int pos = -1;
