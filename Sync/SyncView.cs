@@ -305,6 +305,141 @@ namespace FlickrSync
             return name;
         }
 
+        private SyncItem CreateSyncItem(SyncFolder sf, FileInfo fi, ImageInfo ii, SyncItem.Actions action, string name, long max_size)
+        {
+            var si = new SyncItem();
+
+            si.Action = action;
+
+            if (fi.Length > max_size)
+            {
+                si.Action = SyncItem.Actions.ActionNone;
+            }
+
+            si.Filename = fi.FullName;
+            si.SetId = sf.SetId;
+            si.SetTitle = sf.SetTitle;
+            si.SetDescription = sf.SetDescription;
+            si.NoDeleteTags = sf.NoDeleteTags;
+
+            if (!string.IsNullOrEmpty(ii.GetTitle()) && sf.SyncMethod != SyncFolder.Methods.SyncFilename)
+            {
+                si.Title = ii.GetTitle();
+            }
+            else
+            {
+                si.Title = name;
+            }
+
+            si.Description = ii.GetDescription();
+            si.Tags = ii.GetTagsArray();
+
+            if (!string.IsNullOrEmpty(ii.GetCity()))
+            {
+                si.Tags.Add(ii.GetCity());
+            }
+
+            if (!string.IsNullOrEmpty(ii.GetCountry()))
+            {
+                si.Tags.Add(ii.GetCountry());
+            }
+
+            si.GeoLat = ii.GetGeo(lat: true);
+            si.GeoLong = ii.GetGeo(lat: false);
+
+            si.FolderPath = sf.FolderPath;
+            si.Permission = sf.Permission;
+
+            return si;
+        }
+
+        private bool IsPhotoMatch(SyncFolder sf, PhotoInfo pi, ImageInfo ii, string name)
+        {
+            if (sf.SyncMethod == SyncFolder.Methods.SyncFilename && pi.Title == name)
+            {
+                return true;
+            }
+
+            if (sf.SyncMethod == SyncFolder.Methods.SyncDateTaken && pi.DateTaken == ii.GetDateTaken())
+            {
+                return true;
+            }
+
+            if (sf.SyncMethod == SyncFolder.Methods.SyncTitleOrFilename)
+            {
+                string title = ii.GetTitle();
+                if (string.IsNullOrEmpty(title))
+                {
+                    title = name;
+                }
+
+                if (pi.Title == title)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private List<PhotoInfo> GetPhotos(SyncFolder sf)
+        {
+            var photosInSet = new List<PhotoInfo>();
+
+            if (!string.IsNullOrEmpty(sf.SetId))
+            {
+                return photosInSet;
+            }
+
+            int retryCount = 0;
+            bool success = false;
+
+            while (!success)
+            {
+                try
+                {
+                    photosInSet.Clear();
+
+                    foreach (Photo p in FlickrSync.ri.SetPhotos(sf.SetId))
+                    {
+                        // workaround since media type and p.MachineTags is not working on FlickrNet 2.1.5
+                        if (p.CleanTags != null)
+                        {
+                            if (p.CleanTags.IndexOf("flickrsync:type=video", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                p.CleanTags.IndexOf("flickrsync:cmd=skip", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                p.CleanTags.IndexOf("flickrsync:type:video", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                p.CleanTags.IndexOf("flickrsync:cmd:skip", StringComparison.OrdinalIgnoreCase) >= 0)
+                                continue;
+                        }
+
+                        PhotoInfo pi = new PhotoInfo();
+                        pi.Title = p.Title;
+                        pi.DateTaken = p.DateTaken;
+                        pi.DateSync = sf.LastSync;
+                        pi.DateUploaded = p.DateUploaded;
+                        pi.PhotoId = p.PhotoId;
+                        pi.Found = false;
+                        photosInSet.Add(pi);
+                    }
+
+                    success = true;
+                }
+                catch (Exception)
+                {
+                    if (retryCount++ <= 5)
+                    {
+                        Thread.Sleep(TimeSpan.FromSeconds(1));
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            return photosInSet;
+        }
+
         private void CalcSync()
         {
             this.Cursor = Cursors.WaitCursor;
@@ -324,74 +459,38 @@ namespace FlickrSync
             {
                 Application.DoEvents();
 
-                if (sf.SetId == "" && sf.SetTitle == "")
+                if (string.IsNullOrEmpty(sf.SetId) && string.IsNullOrEmpty(sf.SetTitle))
                 {
                     this.Cursor = Cursors.Default;
-                    if (FlickrSync.messages_level==FlickrSync.MessagesLevel.MessagesAll)
+                    if (FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll)
+                    {
                         MessageBox.Show(sf.FolderPath + " has no associated Set", "Warning");
+                    }
+
                     FlickrSync.Log(FlickrSync.LogLevel.LogAll, sf.FolderPath + " has no associated set");
                     this.Cursor = Cursors.WaitCursor;
                     continue;
                 }
 
-                ArrayList photos = new ArrayList();
+                var photos = new List<PhotoInfo>();
 
-                if (sf.SetId != "")
+                try
                 {
-                    int retryCount = 0;
-                    bool success = false;
-
-                    while (!success)
-                    {
-                        try
-                        {
-                            ArrayList photosInSet = new ArrayList();
-
-                            foreach (Photo p in FlickrSync.ri.SetPhotos(sf.SetId))
-                            {
-                                // workaround since media type and p.MachineTags is not working on FlickrNet 2.1.5
-                                if (p.CleanTags != null)
-                                {
-                                    if (p.CleanTags.ToLower().Contains("flickrsync:type=video") ||
-                                        p.CleanTags.ToLower().Contains("flickrsync:cmd=skip") ||
-                                        p.CleanTags.ToLower().Contains("flickrsync:type:video") ||
-                                        p.CleanTags.ToLower().Contains("flickrsync:cmd:skip"))
-                                        continue;
-                                }
-
-                                PhotoInfo pi = new PhotoInfo();
-                                pi.Title = p.Title;
-                                pi.DateTaken = p.DateTaken;
-                                pi.DateSync = sf.LastSync;
-                                pi.DateUploaded = p.DateUploaded;
-                                pi.PhotoId = p.PhotoId;
-                                pi.Found = false;
-                                photosInSet.Add(pi);
-                            }
-
-                            photos.AddRange(photosInSet);
-                            success = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            if (retryCount++ <= 30)
-                            {
-                                Thread.Sleep(TimeSpan.FromSeconds(1));
-                            }
-                            else
-                            {
-                                FlickrSync.Error("Error loading information from Set " + sf.SetId, ex, FlickrSync.ErrorType.Normal);
-                                Close();
-                            }
-                        }
-                    }
+                    photos = GetPhotos(sf);
+                }
+                catch (Exception ex)
+                {
+                    FlickrSync.Error("Error loading information from Set " + sf.SetId, ex, FlickrSync.ErrorType.Normal);
+                    Close();
                 }
 
                 List<FileInfo> files = GetFiles(sf);
 
                 ListViewGroup group;
-                if (sf.SetId == "")
+                if (string.IsNullOrEmpty(sf.SetId))
+                {
                     group = new ListViewGroup("Folder: " + sf.FolderPath + "; Set: " + sf.SetTitle);
+                }
                 else
                 {
                     try
@@ -423,63 +522,21 @@ namespace FlickrSync
                     {
                         pos++;
 
-                        if (sf.SyncMethod == SyncFolder.Methods.SyncFilename && pi.Title == name)
+                        if (IsPhotoMatch(sf, pi, ii, name))
                         {
                             found = true;
                             break;
-                        }
-
-                        if (sf.SyncMethod == SyncFolder.Methods.SyncDateTaken && pi.DateTaken == ii.GetDateTaken())
-                        {
-                            found = true;
-                            break;
-                        }
-
-                        if (sf.SyncMethod == SyncFolder.Methods.SyncTitleOrFilename)
-                        {
-                            string title = ii.GetTitle();
-                            if (title==null || title == "") title = name;
-
-                            if (pi.Title == title)
-                            {
-                                found = true;
-                                break;
-                            }
                         }
                     }
 
                     if (!found)
                     {
-                        SyncItem si = new SyncItem();
-                        si.Action = SyncItem.Actions.ActionUpload;
-
-                        if (fi.Length > max_size)
-                            si.Action = SyncItem.Actions.ActionNone;
-                        
-                        si.Filename = fi.FullName;
-                        si.SetId = sf.SetId;
-                        si.SetTitle = sf.SetTitle;
-                        si.SetDescription = sf.SetDescription;
-
                         if (ii.GetFileName() != fi.FullName)
+                        {
                             ii.Load(fi.FullName, ImageInfo.FileTypes.FileTypeUnknown);
+                        }
 
-                        if (ii.GetTitle() != "" && sf.SyncMethod != SyncFolder.Methods.SyncFilename)
-                            si.Title = ii.GetTitle();
-                        else
-                            si.Title = name;
-
-                        si.Description = ii.GetDescription();
-                        si.Tags = ii.GetTagsArray();
-                        if (ii.GetCity() != "")
-                            si.Tags.Add(ii.GetCity());
-                        if (ii.GetCountry() != "")
-                            si.Tags.Add(ii.GetCountry());
-                        si.GeoLat = ii.GetGeo(true);
-                        si.GeoLong = ii.GetGeo(false);
-
-                        si.FolderPath = sf.FolderPath;
-                        si.Permission = sf.Permission;
+                        SyncItem si = CreateSyncItem(sf, fi, ii, SyncItem.Actions.ActionUpload, name, max_size);
 
                         int position = 0;
                         if (Properties.Settings.Default.UseThumbnailImages)
@@ -509,45 +566,30 @@ namespace FlickrSync
                     }
                     else
                     {
-                        ((PhotoInfo)photos[pos]).Found = true;
+                        photos[pos].Found = true;
 
                         // Compare time is based on local info DateSync because flickr clock could be misaligned with local clock
-                        DateTime compare = ((PhotoInfo)photos[pos]).DateSync;
+                        DateTime compare = photos[pos].DateSync;
                         if (compare == new DateTime(2000, 1, 1))
-                            compare = ((PhotoInfo)photos[pos]).DateUploaded;
+                        {
+                            compare = photos[pos].DateUploaded;
+                        }
 
                         if (compare < fi.LastWriteTime)
                         {
-                            SyncItem si = new SyncItem();
-                            si.Action = SyncItem.Actions.ActionReplace;
+                            if (ii.GetFileName() != fi.FullName)
+                            {
+                                ii.Load(fi.FullName, ImageInfo.FileTypes.FileTypeUnknown);
+                            }
+
+                            SyncItem si = CreateSyncItem(sf, fi, ii, SyncItem.Actions.ActionReplace, name, max_size);
 
                             if (sf.LastSync == (new DateTime(2000, 1, 1)) && sf.NoInitialReplace)
+                            {
                                 si.Action = SyncItem.Actions.ActionNone;
+                            }
 
-                            si.Filename = fi.FullName;
-                            si.PhotoId = ((PhotoInfo)photos[pos]).PhotoId;
-                            si.SetId = sf.SetId;
-                            si.SetTitle = "";
-                            si.SetDescription = "";
-                            si.Permission = sf.Permission;
-                            si.NoDeleteTags = sf.NoDeleteTags;
-
-                            if (ii.GetFileName() != fi.FullName)
-                                ii.Load(fi.FullName, ImageInfo.FileTypes.FileTypeUnknown);
-
-                            if (ii.GetTitle() != "" && sf.SyncMethod != SyncFolder.Methods.SyncFilename)
-                                si.Title = ii.GetTitle();
-                            else
-                                si.Title = name;
-
-                            si.Description = ii.GetDescription();
-                            si.Tags = ii.GetTagsArray();
-                            if (ii.GetCity() != "")
-                                si.Tags.Add(ii.GetCity());
-                            if (ii.GetCountry() != "")
-                                si.Tags.Add(ii.GetCountry());
-                            si.GeoLat = ii.GetGeo(true);
-                            si.GeoLong = ii.GetGeo(false);
+                            si.PhotoId = photos[pos].PhotoId;
 
                             int position = 0;
                             if (Properties.Settings.Default.UseThumbnailImages)
@@ -568,6 +610,7 @@ namespace FlickrSync
                                 lvi = listViewToSync.Items.Add("SKIP: " + fi.Name, position);
                                 lvi.ForeColor = Color.LightGray;
                             }
+
                             lvi.ToolTipText = lvi.Text+" "+group.Header;
                             group.Items.Add(lvi);
 
