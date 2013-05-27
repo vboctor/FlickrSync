@@ -57,7 +57,6 @@
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.imageListLarge = new System.Windows.Forms.ImageList(this.components);
             this.labelCalc = new System.Windows.Forms.Label();
-            this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.labelStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.BottomToolStripPanel = new System.Windows.Forms.ToolStripPanel();
@@ -229,13 +228,6 @@
             this.ViewLogMenuItem.Paint += new System.Windows.Forms.PaintEventHandler(this.ViewLogMenuItem_Paint);
             this.ViewLogMenuItem.Click += new System.EventHandler(this.ViewLogMenuItem_Click);
             // 
-            // DonateMenuItem
-            // 
-            this.DonateMenuItem.Name = "DonateMenuItem";
-            this.DonateMenuItem.Size = new System.Drawing.Size(143, 22);
-            this.DonateMenuItem.Text = "&Donate";
-            this.DonateMenuItem.Click += new System.EventHandler(this.DonateMenuItem_Click);
-            // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
@@ -323,15 +315,6 @@
             this.labelCalc.TabIndex = 3;
             this.labelCalc.Text = "Preparing Synchronization";
             this.labelCalc.Visible = false;
-            // 
-            // webBrowser1
-            // 
-            this.webBrowser1.Location = new System.Drawing.Point(-200, -200);
-            this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser1.Name = "webBrowser1";
-            this.webBrowser1.Size = new System.Drawing.Size(100, 85);
-            this.webBrowser1.TabIndex = 4;
-            this.webBrowser1.Navigated += new System.Windows.Forms.WebBrowserNavigatedEventHandler(this.webBrowser1_Navigated);
             // 
             // statusStrip1
             // 
@@ -637,7 +620,6 @@
             this.ClientSize = new System.Drawing.Size(933, 518);
             this.Controls.Add(this.toolStripContainer1);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.webBrowser1);
             this.Controls.Add(this.labelCalc);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
@@ -685,7 +667,6 @@
         private System.Windows.Forms.ToolStripMenuItem preferencesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem1;
-        private System.Windows.Forms.WebBrowser webBrowser1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripStatusLabel labelStatus;

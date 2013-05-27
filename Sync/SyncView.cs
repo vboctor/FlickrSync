@@ -30,7 +30,6 @@ namespace FlickrSync
         ArrayList SyncFolders;
         ArrayList SyncItems;
         static DateTime SyncDate;
-        string AdsUrlPath;
 
         bool SyncStarted = false;
         bool SyncAborted = false;
@@ -55,7 +54,6 @@ namespace FlickrSync
             Tasks = new ArrayList();
             NewSets = new ArrayList();
             SyncFolders = pSyncFolders;
-            AdsUrlPath = "";
 
             CalcSync();
         }
@@ -101,7 +99,7 @@ namespace FlickrSync
                             try
                             {
                                 bm = new Bitmap(tt.org);
-                                //bmSize = ThumbnailSize*2;
+                                //bmSize = ThumbnailSize*2; 
 
                                 if (bm == null)
                                     continue;
@@ -1241,32 +1239,6 @@ namespace FlickrSync
             labelSync.Text = "Synchronizing. Please Wait...";
             buttonSync.Visible=false;
 
-            //show ads
-            bool show=true;
-            string hash = FlickrSync.ri.UserId().GetHashCode().ToString("X");
-            foreach (string str in FlickrSync.HashUsers)
-            {
-                if (str == hash)
-                {
-                    show = false;
-                    break;
-                }
-
-                if (str == "VERSION" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version)
-                {
-                    show = false;
-                    break;
-                }
-            }
-
-            if (show)
-            {
-                webBrowserAds.Height = 70;
-                webBrowserAds.Width = listViewToSync.Width;
-                webBrowserAds.Visible = true;
-                listViewToSync.Height = listViewToSync.Height - webBrowserAds.Height - 5;
-            }
-
             this.Text = "FlickrSync Synchronizing...0%";
 
             ThreadStart ts = new ThreadStart(ExecuteSync);
@@ -1312,18 +1284,6 @@ namespace FlickrSync
 
                 e.Graphics.DrawString(e.Item.Text, listViewToSync.Font, new SolidBrush(e.Item.ForeColor), r2, fmt);
             }
-        }
-
-        private void webBrowserAds_Navigating(object sender, WebBrowserNavigatingEventArgs e)
-        {
-            if (webBrowserAds.Visible && e.Url.ToString()!=Properties.Settings.Default.AdUrl && e.Url.LocalPath!=AdsUrlPath)
-            {
-                e.Cancel = true;
-                System.Diagnostics.Process.Start(e.Url.ToString());
-            }
-
-            if (AdsUrlPath == "")
-                AdsUrlPath = e.Url.LocalPath;
         }
     }
 }

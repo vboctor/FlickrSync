@@ -139,27 +139,6 @@ namespace FlickrSync.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("090130_0000")]
-        public string MessageId {
-            get {
-                return ((string)(this["MessageId"]));
-            }
-            set {
-                this["MessageId"] = value;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://flickrsync.freehostia.com/message.htm")]
-        public string MessageUrl {
-            get {
-                return ((string)(this["MessageUrl"]));
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool UseThumbnailImages {
             get {
@@ -275,24 +254,6 @@ namespace FlickrSync.Properties {
             }
             set {
                 this["OrderType"] = value;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://flickrsync.freehostia.com/ad.htm")]
-        public string AdUrl {
-            get {
-                return ((string)(this["AdUrl"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://flickrsync.freehostia.com/donate.htm")]
-        public string DonateUrl {
-            get {
-                return ((string)(this["DonateUrl"]));
             }
         }
     }

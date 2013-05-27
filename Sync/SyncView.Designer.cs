@@ -37,7 +37,6 @@ namespace FlickrSync
             this.progressBarSync = new System.Windows.Forms.ProgressBar();
             this.progressBarPhoto = new System.Windows.Forms.ProgressBar();
             this.labelSync = new System.Windows.Forms.Label();
-            this.webBrowserAds = new System.Windows.Forms.WebBrowser();
             this.SuspendLayout();
             // 
             // listViewToSync
@@ -111,23 +110,6 @@ namespace FlickrSync
             this.labelSync.Size = new System.Drawing.Size(483, 19);
             this.labelSync.TabIndex = 5;
             // 
-            // webBrowserAds
-            // 
-            this.webBrowserAds.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.webBrowserAds.Location = new System.Drawing.Point(3, 218);
-            this.webBrowserAds.MaximumSize = new System.Drawing.Size(0, 70);
-            this.webBrowserAds.MinimumSize = new System.Drawing.Size(20, 70);
-            this.webBrowserAds.Name = "webBrowserAds";
-            this.webBrowserAds.ScriptErrorsSuppressed = true;
-            this.webBrowserAds.ScrollBarsEnabled = false;
-            this.webBrowserAds.Size = new System.Drawing.Size(485, 70);
-            this.webBrowserAds.TabIndex = 6;
-            this.webBrowserAds.TabStop = false;
-            this.webBrowserAds.Url = new System.Uri("http://flickrsync.freehostia.com/ad.htm", System.UriKind.Absolute);
-            this.webBrowserAds.Visible = false;
-            this.webBrowserAds.Navigating += new System.Windows.Forms.WebBrowserNavigatingEventHandler(this.webBrowserAds_Navigating);
-            // 
             // SyncView
             // 
             this.AcceptButton = this.buttonSync;
@@ -135,7 +117,6 @@ namespace FlickrSync
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonCancel;
             this.ClientSize = new System.Drawing.Size(491, 378);
-            this.Controls.Add(this.webBrowserAds);
             this.Controls.Add(this.labelSync);
             this.Controls.Add(this.progressBarPhoto);
             this.Controls.Add(this.progressBarSync);
@@ -161,6 +142,5 @@ namespace FlickrSync
         private System.Windows.Forms.ProgressBar progressBarPhoto;
         private System.Windows.Forms.Label labelSync;
         private System.Windows.Forms.ImageList imageList1;
-        private System.Windows.Forms.WebBrowser webBrowserAds;
     }
 }

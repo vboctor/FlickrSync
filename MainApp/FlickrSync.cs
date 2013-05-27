@@ -26,11 +26,9 @@ namespace FlickrSync
         static public LocalInfo li;
         static public RemoteInfo ri;
         static public string user;
-        static public bool message_tested=false;
         static public bool autorun = false;
         static public MessagesLevel messages_level = MessagesLevel.MessagesAll;
         static public LogLevel log_level = LogLevel.LogNone;
-        static public ArrayList HashUsers;
         Point MouseDownPos;
 
         static private SyncPropertiesStatus syncprop_status=SyncPropertiesStatus.Default;
@@ -134,15 +132,6 @@ namespace FlickrSync
         #region Initial Load
         private void FlickrSync_Load(object sender, EventArgs e)
         {
-            // probably not needed but just to make sure no message from previous versions is shown
-            if (Properties.Settings.Default.MessageId.CompareTo("090130_0000")<0)
-            {
-                Properties.Settings.Default.MessageId = "090130_0000";
-                Properties.Settings.Default.Save();
-            }
-
-            HashUsers = new ArrayList();
-
             string token="";
             try {
                 token=Properties.Settings.Default.FlickrToken;
@@ -172,17 +161,6 @@ namespace FlickrSync
             else
                 WindowState = FormWindowState.Maximized;
             
-            if (!message_tested)
-            {
-                try
-                {
-                    webBrowser1.Navigate(Properties.Settings.Default.MessageUrl + "?version=" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                }
-                catch (Exception)
-                {
-                }
-            }
-
             if (autorun)
             {
                 ViewAndSync();
@@ -1167,73 +1145,6 @@ namespace FlickrSync
             if (lvi != null)
                 Process.Start(ri.GetPhotosetEditURL(lvi.Name));
         }
-
-        private void DonateMenuItem_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("To donate, please use Paypal. Any donation is welcomed to support future FlickrSync development and costs. If you donate, please send an email to flickrsync@gmail.com and any further donation requests will be hidden.\nThanks\nFlickrSync Team");
-            Process.Start(Properties.Settings.Default.DonateUrl);
-        }
         #endregion
-
-        #region Check out Messages
-        private string FindParam(string doc, string str)
-        {
-            try
-            {
-                int pos = doc.IndexOf(str);
-                if (pos < 0) return "";
-                pos += str.Length;
-
-                int pos2 = doc.IndexOf('"', pos);
-                if (pos2 < 0) return "";
-
-                return doc.Substring(pos, pos2 - pos);
-            }
-            catch (Exception)
-            {
-                return "";
-            }
-        }
-
-        private void webBrowser1_Navigated(object sender, WebBrowserNavigatedEventArgs e)
-        {
-            try
-            {
-                FlickrSync.message_tested = true;
-
-                string mess_id = FindParam(webBrowser1.DocumentText, @"<META name=""mess_id"" content=""message_id=");
-                string mess_valid = FindParam(webBrowser1.DocumentText, @"<META name=""mess_valid"" content=""message_valid=");
-                string mess_text = FindParam(webBrowser1.DocumentText, @"<META name=""mess_text"" content=""message_text="); 
-
-                string hash_users = FindParam(webBrowser1.DocumentText, @"<META name=""hash_users"" content=""hash_users=");
-                string[] hash_list = hash_users.Split(',');
-                foreach (string str in hash_list)
-                    HashUsers.Add(str);
-
-                if (mess_valid == "1" && mess_id.CompareTo(Properties.Settings.Default.MessageId)>0)
-                {
-                    Properties.Settings.Default.MessageId = mess_id;
-                    Properties.Settings.Default.Save();
-
-                    if (mess_text != "" && mess_text != "none")
-                    {
-                        if (messages_level!=MessagesLevel.MessagesNone)
-                            MessageBox.Show(mess_text, "FlickrSync Information");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Process.Start(Properties.Settings.Default.MessageUrl);
-                        Thread.Sleep(10000);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        #endregion
-
-
     }
 }
