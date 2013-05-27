@@ -98,11 +98,18 @@ namespace FlickrSync
 
                         if (bm == null)
                         {
-                            bm = new Bitmap(tt.org);
-                            //bmSize = ThumbnailSize*2; 
+                            try
+                            {
+                                bm = new Bitmap(tt.org);
+                                //bmSize = ThumbnailSize*2;
 
-                            if (bm == null)
+                                if (bm == null)
+                                    continue;
+                            }
+                            catch (Exception)
+                            {
                                 continue;
+                            }
                         }
 
                         Rectangle rc = new Rectangle(0, 0, bmSize, bmSize);
