@@ -246,6 +246,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\check.png" />
+    <Content Include="Resources\skip.png" />
     <Content Include="Resources\default.gif" />
     <Content Include="Resources\delete.gif" />
     <Content Include="Resources\Error.png" />

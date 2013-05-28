@@ -41,6 +41,7 @@ namespace FlickrSync
         ArrayList NewSets;
 
         private delegate void ChangeProgressBarCallBack(ProgressBars pb, ProgressValues type, int value, string status);
+        private delegate void MarkImagesCallBack(int index, bool success);
         private delegate void RefreshImagesCallBack(int index);
         private delegate void FinishCallBack();
 
@@ -220,7 +221,26 @@ namespace FlickrSync
 
                 foreach (string ext in Properties.Settings.Default.Extensions)
                 {
-                    files.AddRange(dir.GetFiles("*." + ext));
+                    FileInfo[] foundFiles = dir.GetFiles("*." + ext);
+
+                    foreach (FileInfo file in foundFiles)
+                    {
+                        // Some apps generate hidden files that are not meant to be uploaded but has the
+                        // same extension as the image (e.g. "._name.jpg" with size 4,096 bytes).
+                        if ((file.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                        {
+                            continue;
+                        }
+
+                        // Make sure the file is valid, otherwise, is will cause failure later when attempting
+                        // to upload to Flickr.
+                        if (file.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        files.Add(file);
+                    }
                 }
             }
             catch (Exception ex)
@@ -762,11 +782,11 @@ namespace FlickrSync
             ChangeProgressBar(ProgressBars.PBPhoto, ProgressValues.PBValue, value);
         }
 
-        private void MarkCompleted(int index)
+        private void MarkCompleted(int index, bool success)
         {
             try
             {
-                ListViewItem lvi=listViewToSync.Items[index];
+                ListViewItem lvi = listViewToSync.Items[index];
 
                 lvi.ForeColor = SystemColors.WindowText;
                 lvi.BackColor = Color.FromArgb(220, 250, 220);
@@ -777,7 +797,8 @@ namespace FlickrSync
                     Graphics g = Graphics.FromImage(img);
                     g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
                     g.FillRectangle(new SolidBrush(Color.FromArgb(192, Color.White)), new Rectangle(0, 0, ThumbnailSize, ThumbnailSize));
-                    g.DrawImage(Properties.Resources.check, ThumbnailSize - 25, ThumbnailSize - 25);
+                    g.DrawImage(success ? Properties.Resources.check : Properties.Resources.skip, ThumbnailSize - 25, ThumbnailSize - 25);
+
                     lvi.ImageList.Images[lvi.ImageIndex] = img;
                 }
 
@@ -960,7 +981,15 @@ namespace FlickrSync
                                 }
                                 catch (Exception ex)
                                 {
-                                    if (retrycount <= 30)
+                                    if (string.Equals(ex.Message, "Filetype was not recognised (5)", StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(ex.Message, "General upload failure (3)", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        sequenceOfPhotosSkipped++;
+                                        skipPhoto = true;
+                                        break;
+                                    }
+
+                                    if (retrycount <= 5)
                                     {
                                         Thread.Sleep(TimeSpan.FromSeconds(1));
                                         retrycount++;
@@ -970,7 +999,6 @@ namespace FlickrSync
                                         FlickrSync.Error("Error uploading picture to flickr: " + si.Filename, ex, FlickrSync.ErrorType.Normal);
                                         skipPhoto = true;
                                         sequenceOfPhotosSkipped++;
-                                        retry = false;
                                         break;
                                     }
                                 }
@@ -985,6 +1013,10 @@ namespace FlickrSync
                             // A photo can be corrupted, so let's move on to the next one.
                             if (skipPhoto)
                             {
+                                FlickrSync.ri.ClearProgress();
+                                pos++;
+                                ChangeProgressBar(ProgressBars.PBSync, ProgressValues.PBValue, pos);
+                                this.Invoke(new MarkImagesCallBack(MarkCompleted), new object[] { si.item_id, /* success */ false });
                                 continue;
                             }
 
@@ -1009,7 +1041,7 @@ namespace FlickrSync
                                         else
                                         {                       //only ask for user confirmation after retrying (retry several times if messages are disabled).
                                             if ((retrycount > 0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
-                                                (retrycount > 30 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
+                                                (retrycount > 5 && FlickrSync.messages_level != FlickrSync.MessagesLevel.MessagesAll))
                                             {
                                                 DialogResult resp = DialogResult.Abort;
                                                 if (FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll)
@@ -1036,7 +1068,7 @@ namespace FlickrSync
                                     catch (Exception ex2) // all other exceptions do the same
                                     {                     //only ask for user confirmation after retrying (retry several times if messages are disabled).
                                         if ((retrycount > 0 && FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll) ||
-                                            (retrycount > 30 && FlickrSync.messages_level!=FlickrSync.MessagesLevel.MessagesAll))
+                                            (retrycount > 5 && FlickrSync.messages_level != FlickrSync.MessagesLevel.MessagesAll))
                                         {
                                             DialogResult resp = DialogResult.Abort;
                                             if (FlickrSync.messages_level == FlickrSync.MessagesLevel.MessagesAll)
@@ -1139,9 +1171,7 @@ namespace FlickrSync
                             pos++;
                             ChangeProgressBar(ProgressBars.PBSync, ProgressValues.PBValue, pos);
 
-                            //if (Properties.Settings.Default.UseThumbnailImages) {
-                            this.Invoke(new RefreshImagesCallBack(MarkCompleted), new object[] { si.item_id });
-                            //}
+                            this.Invoke(new MarkImagesCallBack(MarkCompleted), new object[] { si.item_id, /* success */ true });
                         }
                         catch (Exception)
                         {
@@ -1244,6 +1274,7 @@ namespace FlickrSync
             ThreadStart ts = new ThreadStart(ExecuteSync);
             SyncThread = new Thread(ts);
             SyncStarted = true;
+            SyncThread.Name = "UploadPhotosThread";
             SyncThread.Start();
         }
 
